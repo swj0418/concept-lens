@@ -12,8 +12,6 @@ import numpy as np
 import torch
 import warnings
 
-import data_generation.generator.dnnlib
-
 #----------------------------------------------------------------------------
 # Cached construction of constant tensors. Avoids CPU=>GPU copy when the
 # same constant is used multiple times.

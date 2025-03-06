@@ -14,12 +14,12 @@ https://github.com/NVlabs/stylegan2/blob/master/training/networks_stylegan2.py""
 import re
 import numpy as np
 import torch
-from data_generation.generator.torch_utils import misc
-from data_generation.generator.torch_utils import persistence
-from data_generation.generator.torch_utils.ops import conv2d_resample
-from data_generation.generator.torch_utils.ops import upfirdn2d
-from data_generation.generator.torch_utils.ops import bias_act
-from data_generation.generator.torch_utils.ops import fma
+from data_generation.torch_utils import misc
+from data_generation.torch_utils import persistence
+from data_generation.torch_utils.ops import conv2d_resample
+from data_generation.torch_utils.ops import bias_act
+from data_generation.torch_utils.ops import fma, upfirdn2d
+
 
 #----------------------------------------------------------------------------
 

@@ -21,7 +21,7 @@ import copy
 import uuid
 import types
 
-import data_generation.generator.dnnlib as dnnlib
+import data_generation.dnnlib as dnnlib
 
 #----------------------------------------------------------------------------
 

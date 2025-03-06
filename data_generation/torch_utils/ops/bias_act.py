@@ -12,7 +12,7 @@ import os
 import numpy as np
 import torch
 
-import data_generation.generator.dnnlib as dnnlib
+import data_generation.dnnlib as dnnlib
 from .. import custom_ops
 from .. import misc
 

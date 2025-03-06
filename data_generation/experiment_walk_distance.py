@@ -1,5 +1,4 @@
 import os
-import random
 import numpy as np
 from argparse import ArgumentParser
 from PIL import Image, ImageDraw
@@ -10,8 +9,8 @@ from sklearn.cluster import KMeans
 import tqdm
 
 from data_generation.utils.latent_code_dataset import LatentCodeDataset
-from data_generation.utils.walker import SeFAWalker, _compute_sefa_directions
-from data_generation.generator.helpers import prepare_model, parse_generator_fp, parse_layer_configuration
+from data_generation.utils.walker import _compute_sefa_directions
+from data_generation._helpers import prepare_model, parse_generator_fp, parse_layer_configuration
 from data_generation.utils.image_utils import convert_images_to_uint8
 
 

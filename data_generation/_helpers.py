@@ -3,9 +3,9 @@ import pickle
 
 import torch
 
-from data_generation.generator.model_utils import copy_params_and_buffers
-from data_generation.generator.stylegan2 import Generator as G2
-from data_generation.generator.stylegan3 import Generator as G3
+from data_generation._model_utils import copy_params_and_buffers
+from data_generation._stylegan2 import Generator as G2
+from data_generation._stylegan3 import Generator as G3
 
 
 def prepare_model(domain, model_path, device):
