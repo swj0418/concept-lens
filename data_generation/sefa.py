@@ -46,6 +46,7 @@ if __name__ == "__main__":
         skip_first_svd=True,
         device=device
     )
+    print(directions.shape)
 
     dataset_manager = DatasetManager(output_root="output")
     dataset_manager.save_tensor(directions, "directions.pt")
