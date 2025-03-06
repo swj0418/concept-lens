@@ -20,7 +20,7 @@ def prepare_model(domain, model_path, device):
             copy_params_and_buffers(old_g, generator, require_all=True)
     generator = generator.to(device)
     return generator
-
+from pathlib import Path
 
 def parse_generator_fp(domain):
     # Settings
@@ -51,10 +51,9 @@ def parse_generator_fp(domain):
         model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                   'checkpoints/stylegan2-afhqwild-512x512.pkl')
     elif domain == 's3t_wild512':
-        model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+        model_path = os.path.join(os.path.dirname(Path(__file__).parent), 'resources',
                                   'checkpoints/stylegan3-t-afhqv2-512x512.pkl')
-        model_path = os.path.join('resources',
-                                  'checkpoints/stylegan3-t-afhqv2-512x512.pkl')
+        # model_path = os.path.join('resources', 'checkpoints/stylegan3-t-afhqv2-512x512.pkl')
     elif domain == 's3r_wild512':
         model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                   'checkpoints/stylegan3-r-afhqv2-512x512.pkl')
