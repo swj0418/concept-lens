@@ -1,14 +1,15 @@
 import os
+import sys
 import torch
+import torchvision
 
+from pathlib import Path
 from PIL import Image
 import tqdm
 from utils.image_utils import convert_images_to_uint8
 
 
 class LatentCodeGenerator:
-    """Handles latent code sampling and mapping."""
-
     def __init__(self, domain, generator, truncation_psi=0.7, truncation_cutoff=8):
         self.domain = domain
         self.generator = generator
@@ -46,24 +47,36 @@ class ImageGenerator:
         """Applies directions to latent codes and saves manipulated images."""
         os.makedirs(output_dir, exist_ok=True)
         pbar = tqdm.tqdm(dataloader)
+
+        sample = []
         for batch_idx, code_batch in enumerate(pbar):
             for di, direction in enumerate(directions):
                 with torch.no_grad():
-                    img, _ = self.generator.forward_walking(code_batch, None, direction, edit_dist, None, self.psi, 8,
+                    walk_image, _ = self.generator.forward_walking(code_batch, None, direction, edit_dist, None, self.psi, 8,
                                                             noise_mode='const')
-                walk_image = convert_images_to_uint8(img.cpu().numpy(), nchw_to_nhwc=True)
+                # walk_image = convert_images_to_uint8(img.cpu().numpy(), nchw_to_nhwc=True)
                 for img_idx, img in enumerate(walk_image):
+                    sample.append(img)
+
+                    img = convert_images_to_uint8(img.unsqueeze(0).cpu().numpy(), nchw_to_nhwc=True)
                     image_index = batch_idx * len(code_batch) + img_idx
-                    Image.fromarray(img).save(os.path.join(output_dir, f"{image_index}-{di}.jpg"))
+                    Image.fromarray(img[0]).save(os.path.join(output_dir, f"{image_index}-{di}.jpg"))
+
+        # Save summary grid image
+        samples = torch.stack(sample)[:directions.shape[0]*4]  # 4 codes.
+        torchvision.utils.save_image(samples, os.path.join(output_dir, f"00-00.jpg"),
+                                     nrow=directions.shape[0],
+                                     normalize=True)
 
 
 class DatasetManager:
     """Handles dataset organization and saving/loading operations."""
 
     def __init__(self, output_root):
-        self.output_root = output_root
-        self.code_output = os.path.join(output_root, "codes")
-        self.walked_output = os.path.join(output_root, "walked")
+        self.proj_root = os.path.join(os.path.dirname(Path(__file__).parent), 'resources', 'experiments')
+        self.output_root = os.path.join(self.proj_root, output_root)
+        self.code_output = os.path.join(self.output_root, "codes")
+        self.walked_output = os.path.join(self.output_root, "walked")
         os.makedirs(self.output_root, exist_ok=True)
         os.makedirs(self.code_output, exist_ok=True)
         os.makedirs(self.walked_output, exist_ok=True)

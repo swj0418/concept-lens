@@ -510,8 +510,8 @@ class Generator(torch.nn.Module):
 
     def get_style_weights(self):
         print("======= Getting style weights for generator =======")
-        for k, v in self.named_parameters():
-            print("layer name: ", k, "\tshape: ", v.shape)
+        # for k, v in self.named_parameters():
+        #     print("layer name: ", k, "\tshape: ", v.shape)
 
         # weights = {k: v.detach().cpu() for k, v in self.named_parameters() if
         #            # re.match("synthesis\.b[0-9]+\.[A-Za-z]+[0-1]+\.affine\.weight", k)}
@@ -523,7 +523,15 @@ class Generator(torch.nn.Module):
                    re.match("synthesis\.+(.*)+\.affine\.weight", k)}
         return weights
 
-        return weights
+    def get_style_weights_and_biases(self):
+        weights = {k: v.detach().cpu() for k, v in self.named_parameters() if  # Just for landscapes dataset
+                   re.match("synthesis\.+(L.*)+\.affine\.weight", k)}
+
+        biases = {k: v.detach().cpu() for k, v in self.named_parameters() if  # Just for landscapes dataset
+                   re.match("synthesis\.+(L.*)+\.affine\.bias", k)}
+        return weights, biases
+
+
 
     # Custom functions
     def map_ws(self, z, c, truncation_psi=1, truncation_cutoff=None, update_emas=False):
