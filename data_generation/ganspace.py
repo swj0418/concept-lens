@@ -57,7 +57,7 @@ if __name__ == "__main__":
     )
     print(f"{directions.shape[0]} Directions sampled from {w_codes.shape[0]} latent codes.")
 
-    output_fp = f'{args.domain}_{args.method}_{args.layer_name}_{args.application}'
+    output_fp = f'{args.domain}-{args.method}-{args.layer_name}-{args.application}'
     dataset_manager = DatasetManager(output_root=output_fp)
     dataset_manager.save_tensor(directions, "directions.pt")
 

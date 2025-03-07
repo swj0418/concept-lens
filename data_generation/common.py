@@ -49,6 +49,7 @@ class ImageGenerator:
         pbar = tqdm.tqdm(dataloader)
 
         sample = []
+        processed_idx = 0
         for batch_idx, code_batch in enumerate(pbar):
             for di, direction in enumerate(directions):
                 with torch.no_grad():
@@ -59,8 +60,10 @@ class ImageGenerator:
                     sample.append(img)
 
                     img = convert_images_to_uint8(img.unsqueeze(0).cpu().numpy(), nchw_to_nhwc=True)
-                    image_index = batch_idx * len(code_batch) + img_idx
+                    image_index = processed_idx + img_idx
+                    print(image_index)
                     Image.fromarray(img[0]).save(os.path.join(output_dir, f"{image_index}-{di}.jpg"))
+            processed_idx += len(code_batch)
 
         # Save summary grid image
         samples = torch.stack(sample)[:directions.shape[0]*4]  # 4 codes.
