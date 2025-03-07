@@ -1,0 +1,1533 @@
+import {Component, createRef} from "react";
+import App from "./App";
+import $ from 'jquery'
+
+// Style
+import Container from 'react-bootstrap/Container';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
+import * as d3 from "d3";
+
+
+export default class AppUpper extends Component {
+    constructor() {
+        super();
+        this.svgRef = createRef()
+        this.state = {
+            availableExperiments: [],
+            experimentNames: [],
+            methodBlindMode: false,
+            processingMethod: 'end',
+            clusteringMethod: 'complete',
+            pairwiseMetric: 'cosine',
+
+            // Vis
+            height: 960, // 640
+            width: 1200,
+            icicleSize: 125,
+            settingWidth: 0,
+            toggledBarSize: 8,
+            originalImagePlotSize: 120,
+            imageSize: 100,
+            oriGap: 10,
+            visDepth: 7,
+            truncatedTree: true,
+
+            // Infra
+            port: 37203
+        }
+        // this.populateDropdown = this.populateDropdown.bind(this)
+        this.requestAvailableExperiment = this.requestAvailableExperiments.bind(this)
+
+        // Request all available experiments
+        this.requestAvailableExperiments()
+
+        // document.addEventListener("DOMContentLoaded", function() {
+        //     this.populateDropdown()
+        // })
+
+        // Meta listener
+        document.addEventListener ('keydown', function (event) {
+            if (event.shiftKey) {
+                // Raise brush
+                d3.selectAll('.brush').raise()
+            }
+        });
+
+        document.addEventListener ('keydown', function (event) {
+            if (event.ctrlKey) {
+                // Raise brush
+                d3.selectAll('.brush').lower()
+            }
+        });
+
+        this.checkboxOnChange = this.checkboxOnChange.bind(this)
+
+        this.methodBlindModeOnChange = this.methodBlindModeOnChange.bind(this)
+        this.processingMethodOnChange = this.processingMethodOnChange.bind(this)
+        this.clusteringMethodOnChange = this.clusteringMethodOnChange.bind(this)
+        this.pairwiseMetricOnChange = this.pairwiseMetricOnChange.bind(this)
+        this.visDepthOnChange = this.visDepthOnChange.bind(this)
+        this.truncatedTreeOnChange = this.truncatedTreeOnChange.bind(this)
+    }
+
+    // async requestAvailableExperiments() {
+    //     let data = fetch(`http://127.0.0.1:${this.state.port}/conceptlens/available_experiments`, {
+    //         method: 'POST',
+    //         body: JSON.stringify({})
+    //     }).then(response => response.json())
+    //         .then(data => JSON.parse(data))
+    //         .then(data => {
+    //             console.log(data)
+    //             return data
+    //         })
+    //     return data
+    // }
+
+    checkboxOnChange(e) {
+        let newExperimentNames = [...this.state.experimentNames]
+        if (newExperimentNames.includes(e.target.value))
+            this.removeItemOnce(newExperimentNames, e.target.value)
+        else
+            newExperimentNames.push(e.target.value)
+
+        this.setState({experimentNames: newExperimentNames})
+    }
+
+    processingMethodOnChange(e){
+        this.setState({processingMethod: e.target.value})
+
+    }
+
+    methodBlindModeOnChange(e) {this.setState({methodBlindMode: e.target.value})}
+
+    clusteringMethodOnChange(e) { this.setState({clusteringMethod: e.target.value}) }
+
+    pairwiseMetricOnChange(e) { this.setState({pairwiseMetric: e.target.value}) }
+
+    visDepthOnChange(e) { this.setState( {visDepth: parseInt(e.target.value)} ) }
+
+    truncatedTreeOnChange(e) { this.setState({truncatedTree: e.target.value}) }
+
+    removeItemOnce(arr, value) {
+        var index = arr.indexOf(value);
+        if (index > -1) {
+            arr.splice(index, 1);
+        }
+        return arr;
+    }
+
+    async requestAvailableExperiments() {
+        try {
+            let response = await fetch(`http://127.0.0.1:${this.state.port}/conceptlens/available_experiments`, {
+                method: 'POST',
+                body: JSON.stringify({})
+            });
+            let data = await response.json();
+            this.setState({ availableExperiments: data }, this.populateDropdown);
+        } catch (error) {
+            console.error('Error fetching experiments:', error);
+        }
+    }
+
+    // populateDropdown() {
+    //     const dataList = document.getElementById("experiment-choice-list");
+    //     dataList.innerHTML = ''; // Clear existing options
+    //
+    //     let experiments = [
+    //         "s2_ffhq256-va-layerwise-early_0",
+    //         "s2_ffhq256-va-layerwise-early_1",
+    //         "s2_ffhq256-va-layerwise-middle_0",
+    //         "s2_ffhq256-va-layerwise-middle_1",
+    //         "s2_ffhq256-va-layerwise-middle_2",
+    //         "s2_ffhq256-va-layerwise-late_0",
+    //         "s2_ffhq256-va-layerwise-late_1",
+    //         "s2_ffhq256-va-global-early_0",
+    //         "s2_ffhq256-va-global-early_1",
+    //         "s2_ffhq256-va-global-middle_0",
+    //         "s2_ffhq256-va-global-middle_1",
+    //         "s2_ffhq256-va-global-middle_2",
+    //         "s2_ffhq256-va-global-late_0",
+    //         "s2_ffhq256-va-global-late_1",
+    //         "s2_ffhq256-sefakmc-layerwise-early_0",
+    //         "s2_ffhq256-sefakmc-layerwise-early_1",
+    //         "s2_ffhq256-sefakmc-layerwise-middle_0",
+    //         "s2_ffhq256-sefakmc-layerwise-middle_1",
+    //         "s2_ffhq256-sefakmc-layerwise-middle_2",
+    //         "s2_ffhq256-sefakmc-layerwise-late_0",
+    //         "s2_ffhq256-sefakmc-layerwise-late_1",
+    //         "s2_ffhq256-sefakmc-global-early_0",
+    //         "s2_ffhq256-sefakmc-global-early_1",
+    //         "s2_ffhq256-sefakmc-global-middle_0",
+    //         "s2_ffhq256-sefakmc-global-middle_1",
+    //         "s2_ffhq256-sefakmc-global-middle_2",
+    //         "s2_ffhq256-sefakmc-global-late_0",
+    //         "s2_ffhq256-sefakmc-global-late_1",
+    //         "s2_ffhq256-ganspacekmc-layerwise-early_0",
+    //         "s2_ffhq256-ganspacekmc-layerwise-early_1",
+    //         "s2_ffhq256-ganspacekmc-layerwise-middle_0",
+    //         "s2_ffhq256-ganspacekmc-layerwise-middle_1",
+    //         "s2_ffhq256-ganspacekmc-layerwise-middle_2",
+    //         "s2_ffhq256-ganspacekmc-layerwise-late_0",
+    //         "s2_ffhq256-ganspacekmc-layerwise-late_1",
+    //         "s2_ffhq256-ganspacekmc-global-early_0",
+    //         "s2_ffhq256-ganspacekmc-global-early_1",
+    //         "s2_ffhq256-ganspacekmc-global-middle_0",
+    //         "s2_ffhq256-ganspacekmc-global-middle_1",
+    //         "s2_ffhq256-ganspacekmc-global-middle_2",
+    //         "s2_ffhq256-ganspacekmc-global-late_0",
+    //         "s2_ffhq256-ganspacekmc-global-late_1",
+    //         "s2_ffhq256-svmw-layerwise-early_0",
+    //         "s2_ffhq256-svmw-layerwise-early_1",
+    //         "s2_ffhq256-svmw-layerwise-middle_0",
+    //         "s2_ffhq256-svmw-layerwise-middle_1",
+    //         "s2_ffhq256-svmw-layerwise-middle_2",
+    //         "s2_ffhq256-svmw-layerwise-late_0",
+    //         "s2_ffhq256-svmw-layerwise-late_1",
+    //         "s2_ffhq256-svmw-global-early_0",
+    //         "s2_ffhq256-svmw-global-early_1",
+    //         "s2_ffhq256-svmw-global-middle_0",
+    //         "s2_ffhq256-svmw-global-middle_1",
+    //         "s2_ffhq256-svmw-global-middle_2",
+    //         "s2_ffhq256-svmw-global-late_0",
+    //         "s2_ffhq256-svmw-global-late_1",
+    //         "s2_wild512-va-layerwise-early_0",
+    //         "s2_wild512-va-layerwise-early_1",
+    //         "s2_wild512-va-layerwise-middle_0",
+    //         "s2_wild512-va-layerwise-middle_1",
+    //         "s2_wild512-va-layerwise-middle_2",
+    //         "s2_wild512-va-layerwise-late_0",
+    //         "s2_wild512-va-layerwise-late_1",
+    //         "s2_wild512-va-global-early_0",
+    //         "s2_wild512-va-global-early_1",
+    //         "s2_wild512-va-global-middle_0",
+    //         "s2_wild512-va-global-middle_1",
+    //         "s2_wild512-va-global-middle_2",
+    //         "s2_wild512-va-global-late_0",
+    //         "s2_wild512-va-global-late_1",
+    //         "s2_wild512-sefakmc-layerwise-early_0",
+    //         "s2_wild512-sefakmc-layerwise-early_1",
+    //         "s2_wild512-sefakmc-layerwise-middle_0",
+    //         "s2_wild512-sefakmc-layerwise-middle_1",
+    //         "s2_wild512-sefakmc-layerwise-middle_2",
+    //         "s2_wild512-sefakmc-layerwise-late_0",
+    //         "s2_wild512-sefakmc-layerwise-late_1",
+    //         "s2_wild512-sefakmc-global-early_0",
+    //         "s2_wild512-sefakmc-global-early_1",
+    //         "s2_wild512-sefakmc-global-middle_0",
+    //         "s2_wild512-sefakmc-global-middle_1",
+    //         "s2_wild512-sefakmc-global-middle_2",
+    //         "s2_wild512-sefakmc-global-late_0",
+    //         "s2_wild512-sefakmc-global-late_1",
+    //         "s2_wild512-ganspacekmc-layerwise-early_0",
+    //         "s2_wild512-ganspacekmc-layerwise-early_1",
+    //         "s2_wild512-ganspacekmc-layerwise-middle_0",
+    //         "s2_wild512-ganspacekmc-layerwise-middle_1",
+    //         "s2_wild512-ganspacekmc-layerwise-middle_2",
+    //         "s2_wild512-ganspacekmc-layerwise-late_0",
+    //         "s2_wild512-ganspacekmc-layerwise-late_1",
+    //         "s2_wild512-ganspacekmc-global-early_0",
+    //         "s2_wild512-ganspacekmc-global-early_1",
+    //         "s2_wild512-ganspacekmc-global-middle_0",
+    //         "s2_wild512-ganspacekmc-global-middle_1",
+    //         "s2_wild512-ganspacekmc-global-middle_2",
+    //         "s2_wild512-ganspacekmc-global-late_0",
+    //         "s2_wild512-ganspacekmc-global-late_1",
+    //         "s2_wild512-svmw-layerwise-early_0",
+    //         "s2_wild512-svmw-layerwise-early_1",
+    //         "s2_wild512-svmw-layerwise-middle_0",
+    //         "s2_wild512-svmw-layerwise-middle_1",
+    //         "s2_wild512-svmw-layerwise-middle_2",
+    //         "s2_wild512-svmw-layerwise-late_0",
+    //         "s2_wild512-svmw-layerwise-late_1",
+    //         "s2_wild512-svmw-global-early_0",
+    //         "s2_wild512-svmw-global-early_1",
+    //         "s2_wild512-svmw-global-middle_0",
+    //         "s2_wild512-svmw-global-middle_1",
+    //         "s2_wild512-svmw-global-middle_2",
+    //         "s2_wild512-svmw-global-late_0",
+    //         "s2_wild512-svmw-global-late_1",
+    //     ]
+    //     experiments.forEach(value => {
+    //         const option = document.createElement("option");
+    //         option.value = value;
+    //         dataList.appendChild(option);
+    //     });
+    // }
+
+    render() {
+        let toggledBarHeight = 8
+        // This component renders correctly.
+        return (
+            <Container fluid>
+                <br/><br/>
+                <Row>
+                    <Col xs={2}>
+                        {/*<Row className={'row'} onChange={this.checkboxOnChange}>*/}
+                        {/*    <h3> Experiment Selection </h3>*/}
+                        {/*    1st*/}
+                        {/*    <input type={"dropdown"} list="experiment-choice-list" id="experiment-choice" name="experiment-choice" />*/}
+                        {/*    <datalist id="experiment-choice-list"></datalist>*/}
+
+                        {/*    2nd*/}
+                        {/*    <input type={"dropdown"} list="experiment-choice-list" id="experiment-choice" name="experiment-choice" />*/}
+                        {/*    <datalist id="experiment-choice-list"></datalist>*/}
+                        {/*</Row>*/}
+
+                        <Row className={'row'} onChange={this.checkboxOnChange}>
+                         <h4> Methods </h4>
+                            <Row>
+                                <Col xs={9}> 1024 AE Global </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq1024-ae-global-all"/>
+                                </Col>
+                            </Row>
+                           <Row>
+                                <Col xs={9}> 1024 VAC Global </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq1024-vac-global-all"/>
+                               </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> 1024 GANSPACE Global </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq1024-ganspacekmc-global-all"/>
+                                </Col>
+                            </Row>
+                            <h5> Vector Arithmetic </h5>
+                            <h6> FFHQ, Layerwise</h6>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac-layerwise-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac-layerwise-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac-layerwise-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac-layerwise-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac-layerwise-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac-layerwise-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac-layerwise-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> FFHQ, global </h6>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac-global-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac-global-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac-global-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac-global-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac-global-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac-global-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac-global-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> Wild, Layerwise</h6>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-va-layerwise-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-va-layerwise-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-va-layerwise-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-va-layerwise-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-va-layerwise-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-va-layerwise-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-va-layerwise-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> Wild, global </h6>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-vac-global-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-vac-global-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-vac-global-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-vac-global-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-vac-global-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-vac-global-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-vac-global-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> Landscape, Layerwise</h6>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-vac-layerwise-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-vac-layerwise-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-vac-layerwise-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-vac-layerwise-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-vac-layerwise-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-vac-layerwise-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-vac-layerwise-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> Landscape, global </h6>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-vac-global-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-vac-global-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-vac-global-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-vac-global-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-vac-global-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-vac-global-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-vac-global-late_1"/>
+                                </Col>
+                            </Row>
+                            {/*================================================ SeFA=============================  */}
+
+
+                            <h5> SeFA K-Means Center </h5>
+                            <h6> FFHQ, layerwise</h6>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-sefakmc-layerwise-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-sefakmc-layerwise-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-sefakmc-layerwise-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-sefakmc-layerwise-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-sefakmc-layerwise-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-sefakmc-layerwise-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-sefakmc-layerwise-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> FFHQ, global </h6>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-sefakmc-global-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-sefakmc-global-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-sefakmc-global-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-sefakmc-global-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-sefakmc-global-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-sefakmc-global-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-sefakmc-global-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> Wild, Layerwise </h6>
+                            <Row>
+                                <Col xs={9}> S2 Wild Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-sefakmc-layerwise-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-sefakmc-layerwise-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-sefakmc-layerwise-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-sefakmc-layerwise-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-sefakmc-layerwise-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-sefakmc-layerwise-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-sefakmc-layerwise-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> Wild, global </h6>
+                            <Row>
+                                <Col xs={9}> S2 Wild Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-sefakmc-global-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-sefakmc-global-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-sefakmc-global-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-sefakmc-global-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-sefakmc-global-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-sefakmc-global-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-sefakmc-global-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> Landscape, Layerwise </h6>
+                            <Row>
+                                <Col xs={9}> S2 Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-sefakmc-layerwise-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-sefakmc-layerwise-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-sefakmc-layerwise-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-sefakmc-layerwise-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-sefakmc-layerwise-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-sefakmc-layerwise-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-sefakmc-layerwise-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> Landscape, global </h6>
+                            <Row>
+                                <Col xs={9}> S2 Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-sefakmc-global-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-sefakmc-global-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-sefakmc-global-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-sefakmc-global-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-sefakmc-global-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-sefakmc-global-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-sefakmc-global-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> Cat, Layerwise </h6>
+                            <Row>
+                                <Col xs={9}> S2 Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_cat512-sefakmc-layerwise-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_cat512-sefakmc-layerwise-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_cat512-sefakmc-layerwise-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_cat512-sefakmc-layerwise-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_cat512-sefakmc-layerwise-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_cat512-sefakmc-layerwise-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_cat512-sefakmc-layerwise-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> Cat, global </h6>
+                            <Row>
+                                <Col xs={9}> S2 Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_cat512-sefakmc-global-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_cat512-sefakmc-global-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_cat512-sefakmc-global-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_cat512-sefakmc-global-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_cat512-sefakmc-global-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_cat512-sefakmc-global-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_cat512-sefakmc-global-late_1"/>
+                                </Col>
+                            </Row>
+
+                            {/*==============================================GANSpace =============================  */}
+                            <h5> GANSpace K-Means Center </h5>
+
+                            <h6> FFHQ, layerwise</h6>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ganspacekmc-layerwise-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ganspacekmc-layerwise-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ganspacekmc-layerwise-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ganspacekmc-layerwise-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ganspacekmc-layerwise-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ganspacekmc-layerwise-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ganspacekmc-layerwise-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> FFHQ, global </h6>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ganspacekmc-global-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ganspacekmc-global-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ganspacekmc-global-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ganspacekmc-global-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ganspacekmc-global-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ganspacekmc-global-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ganspacekmc-global-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> Wild, Layerwise </h6>
+                            <Row>
+                                <Col xs={9}> S2 Wild Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-ganspacekmc-layerwise-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-ganspacekmc-layerwise-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-ganspacekmc-layerwise-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-ganspacekmc-layerwise-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-ganspacekmc-layerwise-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-ganspacekmc-layerwise-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-ganspacekmc-layerwise-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> Wild, global </h6>
+                            <Row>
+                                <Col xs={9}> S2 Wild Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-ganspacekmc-global-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-ganspacekmc-global-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-ganspacekmc-global-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-ganspacekmc-global-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-ganspacekmc-global-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-ganspacekmc-global-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Wild Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_wild512-ganspacekmc-global-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> Landscape, Layerwise </h6>
+                            <Row>
+                                <Col xs={9}> S2 Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-gansapcekmc-layerwise-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-gansapcekmc-layerwise-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-gansapcekmc-layerwise-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-gansapcekmc-layerwise-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-gansapcekmc-layerwise-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-gansapcekmc-layerwise-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-gansapcekmc-layerwise-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> Landscape, global </h6>
+                            <Row>
+                                <Col xs={9}> S2 Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-gansapcekmc-global-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-gansapcekmc-global-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-gansapcekmc-global-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-gansapcekmc-global-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-gansapcekmc-global-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-gansapcekmc-global-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-gansapcekmc-global-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h5> SVMW </h5>
+                            <Row>
+                                <Col xs={9}> S3 Landscape Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-svmw-layerwise-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S3 Landscape Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-svmw-layerwise-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S3 Landscape Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-svmw-layerwise-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S3 Landscape Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-svmw-layerwise-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S3 Landscape Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-svmw-layerwise-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S3 Landscape Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-svmw-layerwise-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S3 Landscape Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s3_landscape256-svmw-layerwise-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> Gender Only </h6>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-svmw_gender-layerwise-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-svmw_gender-layerwise-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-svmw_gender-layerwise-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-svmw_gender-layerwise-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-svmw_gender-layerwise-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-svmw_gender-layerwise-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-svmw_gender-layerwise-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> CelebA Attributes </h6>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-svmw_ca-layerwise-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Early-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-svmw_ca-layerwise-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-svmw_ca-layerwise-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-svmw_ca-layerwise-middle_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Middle-2 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-svmw_ca-layerwise-middle_2"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-0 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-svmw_ca-layerwise-late_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> S2 FFHQ Late-1 </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-svmw_ca-layerwise-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <h4> Biased Dataset </h4>
+                            <h5> Male & Female </h5>
+                            <h6> Female </h6>
+                            <Row>
+                                <Col xs={9}> FFHQ Early-0 GANSpace </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac_female-layerwise-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> FFHQ Early-1 GANSpace </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac_female-layerwise-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> FFHQ Middle-0 GANSpace </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac_female-layerwise-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> FFHQ Middle-1 GANSpace </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac_female-layerwise-middle_1"/>
+                                </Col>
+                            </Row>
+
+                            <h6> Male </h6>
+
+                            <Row>
+                                <Col xs={9}> FFHQ Early-0 GANSpace </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac_male-layerwise-early_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> FFHQ Early-1 GANSpace </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac_male-layerwise-early_1"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> FFHQ Middle-0 GANSpace </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac_male-layerwise-middle_0"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> FFHQ Middle-1 GANSpace </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac_male-layerwise-middle_1"/>
+                                </Col>
+                            </Row>
+                            <br/>
+
+                            <Row>
+                                <Col xs={9}> FFHQ Early-0 AE </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ae-layerwise-early_0"/>
+                                </Col>
+                            </Row>
+                                                        <Row>
+                                <Col xs={9}> FFHQ Early-1 AE </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ae-layerwise-early_1"/>
+                                </Col>
+                            </Row>
+                                                        <Row>
+                                <Col xs={9}> FFHQ Middle-0 AE </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ae-layerwise-middle_0"/>
+                                </Col>
+                            </Row>
+                                                        <Row>
+                                <Col xs={9}> FFHQ Middle-1 AE </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ae-layerwise-middle_1"/>
+                                </Col>
+                            </Row>
+                                                        <Row>
+                                <Col xs={9}> FFHQ Middle-2 AE </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ae-layerwise-middle_2"/>
+                                </Col>
+                            </Row>
+                                                        <Row>
+                                <Col xs={9}> FFHQ Late-0 AE </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ae-layerwise-late_0"/>
+                                </Col>
+                            </Row>
+                                                        <Row>
+                                <Col xs={9}> FFHQ Late-1 AE </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ae-layerwise-late_1"/>
+                                </Col>
+                            </Row>
+
+                            <Row>
+                                <Col xs={9}> AE Global </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ae-global-all"/>
+                                </Col>
+                            </Row>
+                           <Row>
+                                <Col xs={9}> VAC Global </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-vac-global-all"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={9}> Ganspace Global </Col>
+                                <Col>
+                                    <input type="checkbox" value="s2_ffhq256-ganspacekmc-global-all"/>
+                                </Col>
+                            </Row>
+                        </Row>
+
+                        <hr/>
+
+                        <Row onChange={this.processingMethodOnChange}>
+                            <h5> Feature Processing Method Selection </h5>
+                            <Row>
+                                <Col> Vector Difference </Col>
+                                <Col>
+                                    <input type="radio" value="diff" name="pmd"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col> Vector End </Col>
+                                <Col>
+                                    <input type="radio" value="end" name="pmd"/>
+                                </Col>
+                            </Row>
+                        </Row>
+                        <Row onChange={this.clusteringMethodOnChange}>
+                            <h5> Clustering Method </h5>
+                            <Row>
+                                <Col> Complete </Col>
+                                <Col>
+                                    <input type="radio" value="complete" name="cm"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col> Ward </Col>
+                                <Col>
+                                    <input type="radio" value="ward" name="cm"/>
+                                </Col>
+                            </Row>
+                        </Row>
+                        <Row onChange={this.pairwiseMetricOnChange}>
+                            <h5> Pairwise Distance Metric </h5>
+                            <Row>
+                                <Col> Cosine </Col>
+                                <Col>
+                                    <input type="radio" value="cosine" name="pdm"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col> Euclidean </Col>
+                                <Col>
+                                    <input type="radio" value="euclidean" name="pdm"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col> Raw </Col>
+                                <Col>
+                                    <input type="radio" value="raw" name="pdm"/>
+                                </Col>
+                            </Row>
+                        </Row>
+                        <Row onChange={this.truncatedTreeOnChange}>
+                            <h5> Tree Truncation </h5>
+                            <Row>
+                                <Col> True </Col>
+                                <Col>
+                                    <input type="radio" value="True" name="tt"/>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col> False </Col>
+                                <Col>
+                                    <input type="radio" value="False" name="tt"/>
+                                </Col>
+                            </Row>
+                        </Row>
+                        <Row onChange={this.visDepthOnChange}>
+                            <h5> Tree Visualization Depth </h5>
+                            <Row>
+                                <Col>
+                                    <input type="range" min="1" max="12" step="1" className="slider"/>
+                                </Col>
+                            </Row>
+                        </Row>
+                    </Col>
+                    <Col lg={10}>
+                        <App
+                            experimentNames={this.state.experimentNames}
+                            methodBlindMode={this.state.methodBlindMode}
+                            featureProcessingMethod={this.state.processingMethod}
+                            clusteringMethod={this.state.clusteringMethod}
+                            pairwiseMetric={this.state.pairwiseMetric}
+                            truncatedTree={this.state.truncatedTree}
+                            visDepth={this.state.visDepth}
+                            height={this.state.height}
+                            width={this.state.width}
+                            icicleSize={this.state.icicleSize}
+                            originalImagePlotSize={this.state.originalImagePlotSize}
+                            imageSize={this.state.imageSize}
+                            toggledBarHeight={toggledBarHeight}
+                        />
+                    </Col>
+                </Row>
+            </Container>
+        )
+    }
+}
