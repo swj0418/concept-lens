@@ -7,7 +7,10 @@ We support 4 basic direction-finding methods applicable to style-based generativ
 The supported methods are SeFA, GANSpace, Vector Arithmetic, and Supervised (SVM). However, you are free to explore
 data prepared in the experiment data format.
 
-Data generation is performed in 2 stages. The first stage is image generation and the second is the image processing.\
+Data generation is performed in 2 stages. 
+1. The first stage is image generation
+2. The second stage is the image processing.\
+
 The default image generation scripts are prepared in the root. Simply run
 
 ```
@@ -60,3 +63,14 @@ npm start
 ```
 
 ## Step 3. Data Exploration
+
+
+# Sources
+## GAN Models
+
+StyleGAN2
+s3-t-ffhq
+s3-r-ffhq
+s3-t-
+
+StyleGAN3

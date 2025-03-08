@@ -49,7 +49,40 @@ class ImageGenerator:
             Image.fromarray(img).save(os.path.join(save_dir, f"{i}.jpg"))
         return images
 
-    def apply_directions(self, dataloader, directions, edit_dist, output_dir):
+    # def apply_directions(self, dataloader: torch.utils.data.DataLoader, directions, edit_dist, output_dir):
+    #     """Applies directions to latent codes and saves manipulated images."""
+    #     os.makedirs(output_dir, exist_ok=True)
+    #     pbar = tqdm.tqdm(dataloader)
+    #
+    #     sample = []
+    #     processed_idx = 0
+    #     for batch_idx, code_batch in enumerate(pbar):
+    #         for di, direction in enumerate(directions):
+    #             with torch.no_grad():
+    #                 walk_image, _ = self.generator.forward_walking(code_batch, None, direction, edit_dist, None, self.psi, 8,
+    #                                                         noise_mode='const')
+    #             # walk_image = convert_images_to_uint8(img.cpu().numpy(), nchw_to_nhwc=True)
+    #             for img_idx, img in enumerate(walk_image):
+    #                 image_index = processed_idx + img_idx
+    #                 sample.append(img.detach().cpu())
+    #
+    #                 img = convert_images_to_uint8(img.unsqueeze(0).cpu().numpy(), nchw_to_nhwc=True)
+    #                 Image.fromarray(img[0]).save(os.path.join(output_dir, f"{image_index}-{di}.jpg"))
+    #         processed_idx += len(code_batch)
+    #
+    #     # Save summary grid image
+    #     samples = torch.stack(sample)[:dataloader.batch_size*len(directions)]
+    #     print(samples.shape)
+    #     samples = samples.view(dataloader.batch_size, len(directions), samples.shape[1], samples.shape[2], samples.shape[3],)
+    #     samples = samples[:4]  # 4 codes
+    #     samples = samples.swapdims(0, 1)
+    #     print(samples.shape)
+    #     samples = samples.flatten(start_dim=0, end_dim=1)
+    #     print(samples.shape)
+    #     torchvision.utils.save_image(samples, os.path.join(output_dir, f"00-00.jpg"),
+    #                                  nrow=len(directions),
+    #                                  normalize=True)
+    def apply_directions(self, dataloader: torch.utils.data.DataLoader, directions, edit_dist, output_dir):
         """Applies directions to latent codes and saves manipulated images."""
         os.makedirs(output_dir, exist_ok=True)
         pbar = tqdm.tqdm(dataloader)
@@ -59,21 +92,29 @@ class ImageGenerator:
         for batch_idx, code_batch in enumerate(pbar):
             for di, direction in enumerate(directions):
                 with torch.no_grad():
-                    walk_image, _ = self.generator.forward_walking(code_batch, None, direction, edit_dist, None, self.psi, 8,
-                                                            noise_mode='const')
-                # walk_image = convert_images_to_uint8(img.cpu().numpy(), nchw_to_nhwc=True)
+                    walk_image, _ = self.generator.forward_walking(
+                        code_batch, None, direction, edit_dist, None, self.psi, 8, noise_mode='const')
                 for img_idx, img in enumerate(walk_image):
-                    sample.append(img)
-
-                    img = convert_images_to_uint8(img.unsqueeze(0).cpu().numpy(), nchw_to_nhwc=True)
                     image_index = processed_idx + img_idx
-                    Image.fromarray(img[0]).save(os.path.join(output_dir, f"{image_index}-{di}.jpg"))
+                    sample.append(img.detach().cpu())
+
+                    img_to_save = convert_images_to_uint8(img.unsqueeze(0).cpu().numpy(), nchw_to_nhwc=True)
+                    Image.fromarray(img_to_save[0]).save(os.path.join(output_dir, f"{image_index}-{di}.jpg"))
             processed_idx += len(code_batch)
 
         # Save summary grid image
-        samples = torch.stack(sample)[:processed_idx*4]  # 4 codes.
-        torchvision.utils.save_image(samples, os.path.join(output_dir, f"00-00.jpg"),
-                                     nrow=4,
+        samples = torch.stack(sample)[:dataloader.batch_size * len(directions)]
+        # Reshape using the correct ordering.
+        # Our flat list is ordered as (direction, code) so first view as (len(directions), batch_size, C, H, W)
+        samples = samples.view(len(directions), dataloader.batch_size, samples.shape[1], samples.shape[2], samples.shape[3])
+        # Transpose so that rows correspond to codes and columns to directions.
+        samples = samples.transpose(0, 1)  # now shape: (batch_size, len(directions), C, H, W)
+        # Optionally, take only the first 4 codes
+        samples = samples[:4]
+        # Flatten to shape (4 * len(directions), C, H, W) for saving.
+        samples = samples.flatten(0, 1)
+        torchvision.utils.save_image(samples, os.path.join(output_dir, "00-00.jpg"),
+                                     nrow=len(directions),
                                      normalize=True)
 
 

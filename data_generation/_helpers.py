@@ -19,11 +19,11 @@ def parse_generator_fp(domain):
     domain_map = {
         # NVIDIA official StyleGAN 2
         's2_ffhq256':      {'filename': 'stylegan2-ffhq-256x256.pkl', 'generator_size': 13},
-        's2_ffhq1024':     {'filename': 'stylegan2-ffhq-1024x1024.pkl', 'generator_size': 15},
         's2_celeba256':    {'filename': 'stylegan2-celebahq-256x256.pkl', 'generator_size': 13},
-        's2_metface1024': {'filename': 'stylegan2-metfaces-1024x1024.pkl', 'generator_size': 15},
-        's2_cat512': {'filename': 'stylegan2-afhqcat-512x512.pkl', 'generator_size': 15},
-        's2_wild512': {'filename': 'stylegan2-afhqwild-512x512.pkl', 'generator_size': 15},
+        's2_ffhq1024':     {'filename': 'stylegan2-ffhq-1024x1024.pkl', 'generator_size': 15},
+        's2_metfaces1024': {'filename': 'stylegan2-metfaces-1024x1024.pkl', 'generator_size': 15},
+        's2_cat512':       {'filename': 'stylegan2-afhqcat-512x512.pkl', 'generator_size': 15},
+        's2_wild512':      {'filename': 'stylegan2-afhqwild-512x512.pkl', 'generator_size': 15},
 
         # NVIDIA official StyleGAN 3
         's3t_ffhq1024':    {'filename': 'stylegan3-t-ffhq-1024x1024.pkl', 'generator_size': 15},
@@ -34,7 +34,7 @@ def parse_generator_fp(domain):
         's3r_metfaces1024':{'filename': 'stylegan3-r-metfaces-1024x1024.pkl', 'generator_size': 15},
 
         # Unofficial StyleGAN 2
-        's2_beach256': {'filename': 'stylegan2-beach-256x256.pkl', 'generator_size': 13},
+        's2_beach256':     {'filename': 'stylegan2-beach-256x256.pkl', 'generator_size': 13},
         's2_map512':       {'filename': 'stylegan2-map-512x512.pkl', 'generator_size': 15},
         's2_micro512':     {'filename': 'stylegan2-micro-512x512.pkl', 'generator_size': 15},
 

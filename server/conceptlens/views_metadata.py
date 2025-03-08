@@ -3,7 +3,10 @@ import json
 
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+import natsort
+from django.conf import settings
 
+SERVED_DATA_ROOT = settings.SERVED_DATA_ROOT
 
 @csrf_exempt
 def get_setting(request):
@@ -28,16 +31,17 @@ def get_setting(request):
 
 @csrf_exempt
 def available_experiments(request):
-    found_experiments = sorted(os.listdir('served_data'))
-    try:
+    # List the experiments in the served data directory
+    found_experiments = natsort.natsorted(os.listdir(SERVED_DATA_ROOT))
+    # Remove unwanted files (like .DS_Store on macOS)
+    if '.DS_Store' in found_experiments:
         found_experiments.remove('.DS_Store')
-    except:
-        pass
 
-    resp = json.dumps({
-        'experiment_names': [v for v in found_experiments]
-    })
-    return JsonResponse(resp, safe=False)
+    # Create a list of experiment dictionaries following the original EXPERIMENT structure
+    experiments = [{"name": exp} for exp in found_experiments]
+
+    # Return the experiments under the key "EXPERIMENT"
+    return JsonResponse({"EXPERIMENT": experiments})
 
 
 @csrf_exempt

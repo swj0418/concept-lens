@@ -15,11 +15,12 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .utilities.features import compute_euclidean_distance
 
+from django.conf import settings
 # For debugging purposes
 torch.set_warn_always(False)
 
 # GLOBAL
-SERVED_DATA_ROOT = 'served_data'
+SERVED_DATA_ROOT = settings.SERVED_DATA_ROOT
 torch.set_printoptions(precision=3, sci_mode=False)
 encoder.FLOAT_REPR = lambda o: format(o, '.2f')
 node_size_minimum_control = 3
@@ -43,6 +44,8 @@ var_feature_prior_subset = False
 
 use_latent = False
 var_normalize = False
+
+print(SERVED_DATA_ROOT)
 
 
 def _read_request_form(body):
