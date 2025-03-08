@@ -531,12 +531,14 @@ class Generator(torch.nn.Module):
                    re.match("synthesis\.+(L.*)+\.affine\.bias", k)}
         return weights, biases
 
-
-
     # Custom functions
     def map_ws(self, z, c, truncation_psi=1, truncation_cutoff=None, update_emas=False):
         ws = self.mapping(z, c, truncation_psi=truncation_psi, truncation_cutoff=truncation_cutoff, update_emas=update_emas)
         return ws
+
+    def forward_ws(self, ws, update_emas=False, **synthesis_kwargs):
+        img = self.synthesis(ws, update_emas=update_emas, **synthesis_kwargs)
+        return img
 
     def forward(self, z, c, truncation_psi=1, truncation_cutoff=None, update_emas=False, **synthesis_kwargs):
         ws = self.mapping(z, c, truncation_psi=truncation_psi, truncation_cutoff=truncation_cutoff, update_emas=update_emas)

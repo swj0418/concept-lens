@@ -22,6 +22,12 @@ class LatentCodeGenerator:
         w_codes = self.generator.map_ws(z_codes, None, self.truncation_psi, self.truncation_cutoff)[:, 0, :]
         return z_codes, w_codes
 
+    def sample_full_ws(self, num_samples, device):
+        """Samples Z-space latent codes and maps to W-space."""
+        z_codes = torch.randn(size=(num_samples, 512)).to(device)
+        w_codes = self.generator.map_ws(z_codes, None, self.truncation_psi, self.truncation_cutoff)
+        return z_codes, w_codes
+
 
 class ImageGenerator:
     """Handles StyleGAN-based forward passes and image generation."""
@@ -61,14 +67,13 @@ class ImageGenerator:
 
                     img = convert_images_to_uint8(img.unsqueeze(0).cpu().numpy(), nchw_to_nhwc=True)
                     image_index = processed_idx + img_idx
-                    print(image_index)
                     Image.fromarray(img[0]).save(os.path.join(output_dir, f"{image_index}-{di}.jpg"))
             processed_idx += len(code_batch)
 
         # Save summary grid image
-        samples = torch.stack(sample)[:directions.shape[0]*4]  # 4 codes.
+        samples = torch.stack(sample)[:processed_idx*4]  # 4 codes.
         torchvision.utils.save_image(samples, os.path.join(output_dir, f"00-00.jpg"),
-                                     nrow=directions.shape[0],
+                                     nrow=4,
                                      normalize=True)
 
 
