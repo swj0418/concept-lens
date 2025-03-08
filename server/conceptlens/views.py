@@ -45,8 +45,6 @@ var_feature_prior_subset = False
 use_latent = False
 var_normalize = False
 
-print(SERVED_DATA_ROOT)
-
 
 def _read_request_form(body):
     data = json.loads(body)

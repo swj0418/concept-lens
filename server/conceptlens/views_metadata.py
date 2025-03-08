@@ -38,7 +38,7 @@ def available_experiments(request):
         found_experiments.remove('.DS_Store')
 
     # Create a list of experiment dictionaries following the original EXPERIMENT structure
-    experiments = [{"name": exp} for exp in found_experiments]
+    experiments = [{"id": exp, "name": exp} for exp in found_experiments]
 
     # Return the experiments under the key "EXPERIMENT"
     return JsonResponse({"EXPERIMENT": experiments})
