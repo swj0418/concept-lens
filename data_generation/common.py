@@ -113,7 +113,7 @@ class ImageGenerator:
         samples = samples[:4]
         # Flatten to shape (4 * len(directions), C, H, W) for saving.
         samples = samples.flatten(0, 1)
-        torchvision.utils.save_image(samples, os.path.join(output_dir, "00-00.jpg"),
+        torchvision.utils.save_image(samples, os.path.join(Path(output_dir).parent, "samples.jpg"),
                                      nrow=len(directions),
                                      normalize=True)
 
