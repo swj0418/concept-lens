@@ -55,6 +55,7 @@ if __name__ == "__main__":
     dataset_manager = DatasetManager(output_root=output_fp)
     dataset_manager.save_tensor(directions, "directions.pt")
 
+    torch.manual_seed(args.seed)
     z_codes, w_codes = latent_gen.sample_latent_codes(args.n_codes, device)
     dataloader = DataLoader(LatentCodeDataset(z_codes), batch_size=args.batch_size, shuffle=False)
 

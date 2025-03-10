@@ -40,6 +40,7 @@ if __name__ == "__main__":
     generator = prepare_model(args.domain, generator_fp, device)
     layer_range = parse_layer_configuration(args.layer_name, n_layers)
 
+    torch.manual_seed(args.seed)
     latent_gen = LatentCodeGenerator(args.domain, generator)
     z_codes, w_codes = latent_gen.sample_latent_codes(args.n_codes, device)
 
