@@ -63,8 +63,4 @@ if __name__ == "__main__":
     image_gen = ImageGenerator(generator, device)
     image_gen.generate_images(w_codes, dataset_manager.code_output)
     image_gen.apply_directions(dataloader, directions, args.edit_dist, dataset_manager.walked_output)
-
-
-
-
-
+    image_gen.apply_directions_edist(dataloader, directions, [0, 2, 5, 8, 11], dataset_manager.edist_output)
