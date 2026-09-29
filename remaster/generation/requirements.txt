@@ -1,0 +1,14 @@
+# torch and torchvision come from PyTorch's CUDA index; setup.ps1 installs them first.
+# Versions below are the ones the pipeline was tested with.
+open_clip_torch==3.3.0
+scikit-learn==1.8.0
+scipy==1.17.1
+numpy==2.4.4
+natsort==8.4.0
+tqdm==4.70.1
+pillow==12.2.0
+requests==2.33.1        # imported by the repo's dnnlib
+setuptools>=77,<81      # provides distutils (dnnlib) and pkg_resources on Python 3.12+
+# only for parity/record_fixtures.py, which runs the original Django views
+django==5.2.17
+django-cors-headers==4.9.0

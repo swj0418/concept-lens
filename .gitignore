@@ -1,0 +1,4 @@
+
+# Checkpoints, experiments and caches written by the pipeline
+resources/
+__pycache__/

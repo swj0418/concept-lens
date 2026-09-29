@@ -1,0 +1,11 @@
+# Eight varied face concepts for testing the text-driven methods.
+# template: a close-up photo of a face, {}.
+# neutral: a close-up photo of a face.
+smiling
+eyeglasses
+beard
+bald
+blond hair
+old person
+child
+looking to the left

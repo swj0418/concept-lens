@@ -1,0 +1,88 @@
+{
+  "format": "conceptlens-bundle/2",
+  "created": "2026-09-28T18:58:07",
+  "n_code": 24,
+  "n_direction": 18,
+  "feature_dim": 64,
+  "experiments": [
+    {
+      "name": "s2_ffhq256-sefa-early-global",
+      "offset": 0,
+      "count": 9,
+      "setting": {
+        "experiment_name": "s2_ffhq256-sefa-early-global",
+        "n_code": 24,
+        "n_direction": 9,
+        "n_method": 1,
+        "feature_space": "clip",
+        "uid": "00000000-0000-0000-0a46-8b0af653e6fb"
+      }
+    },
+    {
+      "name": "s2_ffhq256-ganspace-early-global",
+      "offset": 9,
+      "count": 9,
+      "setting": {
+        "experiment_name": "s2_ffhq256-ganspace-early-global",
+        "n_code": 24,
+        "n_direction": 9,
+        "n_method": 1,
+        "feature_space": "clip",
+        "uid": "00000000-0000-0000-3fe5-6044b30fb725"
+      }
+    }
+  ],
+  "files": {
+    "features": {
+      "dtype": "float16",
+      "shape": [
+        24,
+        18,
+        64
+      ],
+      "parts": [
+        {
+          "path": "features-000.f16",
+          "codes": [
+            0,
+            24
+          ]
+        }
+      ]
+    },
+    "magnitude": {
+      "path": "magnitude.f32",
+      "dtype": "float32",
+      "shape": [
+        24,
+        18
+      ]
+    },
+    "direction_distance": {
+      "pattern": "direction-{metric}-{mask}.f64",
+      "dtype": "float64",
+      "masks": [
+        1,
+        2,
+        3
+      ],
+      "metrics": [
+        "cosine",
+        "euclidean"
+      ],
+      "note": "mask bit i = experiment i in the order above"
+    },
+    "code_distance": {
+      "path": "code-euclidean.f64",
+      "dtype": "float64",
+      "condensed": 24
+    }
+  },
+  "images": {
+    "sprite": "sprite-{code}.jpg",
+    "cell": 64,
+    "columns": 16,
+    "rows": 2,
+    "layout": "cell 0 = original image, cell 1 + d = walked image for direction d"
+  }
+}

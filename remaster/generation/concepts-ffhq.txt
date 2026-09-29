@@ -1,0 +1,55 @@
+# Text concepts for the text-driven methods (svm, clip) on face domains, one per line.
+# Each concept becomes one direction per method. Its prompt is the template with the concept in place of {};
+# CLIP scores images by (prompt - neutral prompt) similarity. svm: a linear SVM in W separates the top of that
+# ranking from the bottom. clip: a direction is optimised to move CLIP embeddings from the neutral prompt toward it.
+# generate.py uses the first --n_directions lines. Other lines starting with # are ignored.
+# template: a close-up photo of a face, {}.
+# neutral: a close-up photo of a face.
+smiling
+neutral expression
+open mouth
+closed eyes
+surprised expression
+angry expression
+eyeglasses
+sunglasses
+beard
+mustache
+bald
+long hair
+short hair
+curly hair
+blond hair
+black hair
+brown hair
+red hair
+gray hair
+bangs
+old person
+young adult
+child
+man
+woman
+heavy makeup
+lipstick
+earrings
+hat
+pale skin
+tanned skin
+rosy cheeks
+wrinkles
+thick eyebrows
+big nose
+narrow eyes
+round face
+thin face
+double chin
+looking to the left
+looking to the right
+tilted head
+close-up of a face
+face far from the camera
+bright lighting
+dim lighting
+blurry background
+outdoor background
